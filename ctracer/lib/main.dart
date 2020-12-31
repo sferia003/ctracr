@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import './pages/sign_in_page.dart';
-import './services/authentication.dart';
+import './pages/main_page.dart';
+import './services/user_account.dart';
 
 void main() => runApp(MyApp());
 
@@ -11,7 +11,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'CTracer',
-      home: new RootPage(auth: new Auth())
+      home: new MainPage(account: new UserAccount())
       );
   }
   

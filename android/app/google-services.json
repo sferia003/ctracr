@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1011360499412",
+    "project_id": "ctracer-18388",
+    "storage_bucket": "ctracer-18388.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1011360499412:android:bb29fef18709ed236ddd41",
+        "android_client_info": {
+          "package_name": "com.example.ctracer"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1011360499412-a18skqmvpjbnmk1quvt57ba0psq3h8ml.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCRqANBEF5vfzgSQdB_oHNPmb8MGPLVs-Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1011360499412-a18skqmvpjbnmk1quvt57ba0psq3h8ml.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

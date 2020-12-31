@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
-import './login_signup_page.dart';
-import '../services/authentication.dart';
-import './home_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../services/user_account.dart';
 
-class RootPage extends StatefulWidget {
-  RootPage({this.auth});
+class MainPage extends StatefulWidget {
+  final UserAccount account;
 
-  final BaseAuth auth;
+  MainPage({this.account});
 
   @override
-  State<StatefulWidget> createState() => new _RootPageState();
+  State<StatefulWidget> createState() => new _MainPageState();
 }
 
 enum Status {
@@ -18,44 +17,40 @@ enum Status {
   LOGGED_IN,
 }
 
-class _RootPageState extends State<RootPage> {
+class _MainPageState extends State<MainPage> {
   Status status = Status.NULL;
   String _userId = "";
 
   @override
   void initState() {
     super.initState();
-    widget.auth.getCurrentUser().then((user) {
-      setState(() {
+    setState(() {
+      User user = widget.account.auth.currentUser;
+
         if (user != null) {
           _userId = user?.uid;
         }
         status =
             user?.uid == null ? Status.NOT_LOGGED_IN : Status.LOGGED_IN;
       });
-    });
   }
 
-  void _onLoggedIn() {
-    widget.auth.getCurrentUser().then((user){
-      setState(() {
-        _userId = user.uid.toString();
-      });
-    });
-    setState(() {
+  void _loggedIn() {
+   setState(() {
+      User user = widget.account.auth.currentUser;
+      _userId = user.uid;
       status = Status.LOGGED_IN;
-
-    });
+   });
   }
 
-  void _onSignedOut() {
+  void _signedOut() {
     setState(() {
-      status = Status.NOT_LOGGED_IN;
       _userId = "";
+      status = Status.NOT_LOGGED_IN;
     });
   }
 
-  Widget _buildWaitingScreen() {
+  Widget _loadingScreen() {
     return Scaffold(
       body: Container(
         alignment: Alignment.center,
@@ -68,8 +63,8 @@ class _RootPageState extends State<RootPage> {
   Widget build(BuildContext context) {
     switch (status) {
       case Status.NULL:
-        return _buildWaitingScreen();
-        break;
+      return _loadingScreen();
+      break;
       case Status.NOT_LOGGED_IN:
         return new LoginSignUpPage(
           auth: widget.auth,
@@ -83,10 +78,10 @@ class _RootPageState extends State<RootPage> {
             auth: widget.auth,
             onSignedOut: _onSignedOut,
           );
-        } else return _buildWaitingScreen();
+        } else return _loadingScreen();
         break;
       default:
-        return _buildWaitingScreen();
+        return _loadingScreen();
     }
   }
 }
