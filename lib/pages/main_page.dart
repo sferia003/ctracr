@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/user_account.dart';
+import './authentication_page.dart';
 
 class MainPage extends StatefulWidget {
   final UserAccount account;
@@ -35,7 +36,7 @@ class _MainPageState extends State<MainPage> {
       });
   }
 
-  void _loggedIn() {
+  void _signedIn() {
    setState(() {
       User user = widget.account.auth.currentUser;
       _userId = user.uid;
@@ -67,17 +68,16 @@ class _MainPageState extends State<MainPage> {
       break;
       case Status.NOT_LOGGED_IN:
         return new LoginSignUpPage(
-          auth: widget.auth,
-          onSignedIn: _onLoggedIn,
+          account: widget.account,
+          signedIn: _signedIn
         );
         break;
       case Status.LOGGED_IN:
         if (_userId.length > 0 && _userId != null) {
-          return new HomePage(
-            userId: _userId,
-            auth: widget.auth,
-            onSignedOut: _onSignedOut,
-          );
+          return new LoginSignUpPage(
+          account: widget.account,
+          signedIn: _signedIn
+        );
         } else return _loadingScreen();
         break;
       default:
