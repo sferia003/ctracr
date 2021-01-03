@@ -1,57 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/user_account.dart';
-import './authentication_page.dart';
+import './login_page.dart';
 
-class MainPage extends StatefulWidget {
-  final UserAccount account;
+enum AuthStatus { NOT_DETERMINED, HANDLED }
 
-  MainPage({this.account});
+class HomeController extends StatefulWidget {
+  final AuthService authService;
+
+  const HomeController({this.authService, Key key}) : super(key: key);
 
   @override
-  State<StatefulWidget> createState() => new _MainPageState();
+  _HomeControllerState createState() => _HomeControllerState();
 }
 
-enum Status {
-  NULL,
-  NOT_LOGGED_IN,
-  LOGGED_IN,
-}
-
-class _MainPageState extends State<MainPage> {
-  Status status = Status.NULL;
-  String _userId = "";
+class _HomeControllerState extends State<HomeController> {
+  AuthStatus authenticationStatus = AuthStatus.NOT_DETERMINED;
 
   @override
   void initState() {
     super.initState();
-    setState(() {
-      User user = widget.account.auth.currentUser;
 
-        if (user != null) {
-          _userId = user?.uid;
-        }
-        status =
-            user?.uid == null ? Status.NOT_LOGGED_IN : Status.LOGGED_IN;
+    FirebaseAuth.instance.authStateChanges().listen((firebaseUser) {
+      setState(() {
+        authenticationStatus = AuthStatus.HANDLED;
       });
-  }
-
-  void _signedIn() {
-   setState(() {
-      User user = widget.account.auth.currentUser;
-      _userId = user.uid;
-      status = Status.LOGGED_IN;
-   });
-  }
-
-  void _signedOut() {
-    setState(() {
-      _userId = "";
-      status = Status.NOT_LOGGED_IN;
     });
   }
 
-  Widget _loadingScreen() {
+  Widget _buildWaitingScreen() {
     return Scaffold(
       body: Container(
         alignment: Alignment.center,
@@ -62,26 +39,8 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
-    switch (status) {
-      case Status.NULL:
-      return _loadingScreen();
-      break;
-      case Status.NOT_LOGGED_IN:
-        return new LoginSignUpPage(
-          account: widget.account,
-          signedIn: _signedIn
-        );
-        break;
-      case Status.LOGGED_IN:
-        if (_userId.length > 0 && _userId != null) {
-          return new LoginSignUpPage(
-          account: widget.account,
-          signedIn: _signedIn
-        );
-        } else return _loadingScreen();
-        break;
-      default:
-        return _loadingScreen();
-    }
+    return (authenticationStatus == AuthStatus.HANDLED)
+        ? LoginPage(authService: widget.authService)
+        : _buildWaitingScreen();
   }
 }

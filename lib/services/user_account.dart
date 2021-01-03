@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 
-class UserAccount {
+class AuthService {
   final FirebaseAuth auth = FirebaseAuth.instance;
-  
+
+  Stream<User> get onAuthStateChanged => auth.authStateChanges();
+
   Future<void> signIn(String email, String password) async {
     await auth.signInWithEmailAndPassword(email: email, password: password);
   } 

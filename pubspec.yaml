@@ -23,8 +23,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  firebase_core: ^0.5.3
   firebase_auth: ^0.18.4+1
   firebase_database: ^4.4.0
+  flutter_signin_button: ^1.1.0
+  simple_animations: ^2.4.2
   google_sign_in: ^4.5.6
   sign_in_with_apple: ^2.5.2
   crypto: ^2.1.5
@@ -45,6 +48,8 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
+  assets:
+    - assets/images/small_logo.png
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg
