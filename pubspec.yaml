@@ -32,6 +32,8 @@ dependencies:
   sign_in_with_apple: ^2.5.2
   crypto: ^2.1.5
   cupertino_icons: ^1.0.0
+  flutter_screenutil: ^4.0.2+2 
+  device_preview: ^0.5.5
 
 dev_dependencies:
   flutter_test:
@@ -50,6 +52,10 @@ flutter:
 
   assets:
     - assets/images/small_logo.png
+    - assets/images/splash_logo.png
+    - assets/images/ctracr_txt.png
+    - assets/images/people_graph.png
+    - assets/images/person.png
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

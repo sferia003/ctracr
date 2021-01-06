@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/user_account.dart';
-import './login_page.dart';
+import 'login_page.dart';
 
 enum AuthStatus { NOT_DETERMINED, HANDLED }
 
@@ -28,19 +28,10 @@ class _HomeControllerState extends State<HomeController> {
     });
   }
 
-  Widget _buildWaitingScreen() {
-    return Scaffold(
-      body: Container(
-        alignment: Alignment.center,
-        child: CircularProgressIndicator(),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return (authenticationStatus == AuthStatus.HANDLED)
         ? LoginPage(authService: widget.authService)
-        : _buildWaitingScreen();
+        : LoginPage(authService: widget.authService);
   }
 }
