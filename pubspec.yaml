@@ -32,8 +32,8 @@ dependencies:
   sign_in_with_apple: ^2.5.2
   crypto: ^2.1.5
   cupertino_icons: ^1.0.0
-  flutter_screenutil: ^4.0.2+2 
   device_preview: ^0.5.5
+  connectivity_wrapper: ^1.0.4
 
 dev_dependencies:
   flutter_test:

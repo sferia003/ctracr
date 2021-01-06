@@ -23,7 +23,6 @@ class SizeConfig {
     screenHeight = _mediaQueryData.size.height;
     bH = screenWidth / 100;
     bV = screenHeight / 100;
-    bC = bV * bH;
 
     _safeAreaHorizontal =
         _mediaQueryData.padding.left + _mediaQueryData.padding.right;
