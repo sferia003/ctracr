@@ -1,6 +1,8 @@
+import 'package:ctracer/pages/signup_info.dart';
 import 'package:ctracer/services/user_account.dart';
 import 'package:flutter/material.dart';
 import 'home_controller.dart';
+import 'signup_page.dart';
 import 'dart:async';
 
 class SplashScreen extends StatefulWidget {
@@ -23,9 +25,10 @@ class Splash extends State<SplashScreen> {
     Timer(
         Duration(seconds: 3),
         () => Navigator.of(context).pushReplacement(MaterialPageRoute(
-            builder: (BuildContext context) => HomeController(
-                  authService: widget.authService,
-                ))));
+            builder: (BuildContext context) => SignUpIntro())));
+            // HomeController(
+            //       authService: widget.authService,
+            //     ))));
 
     return MaterialApp(
       home: Scaffold(

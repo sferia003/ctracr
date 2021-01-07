@@ -34,6 +34,7 @@ dependencies:
   cupertino_icons: ^1.0.0
   device_preview: ^0.5.5
   connectivity_wrapper: ^1.0.4
+  dots_indicator: ^1.2.0
 
 dev_dependencies:
   flutter_test:
