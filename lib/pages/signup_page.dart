@@ -373,6 +373,7 @@ class _SignUpPageState extends State<SignUpPage> {
     try {
       await widget.authService.signUp(_eC.text, _pC.text).then((_) {
         if (widget.authService.auth.currentUser != null) {
+          widget.authService.sendEmailVerification();
           Navigator.of(context).push(_transitionSignUp());
         }
       });

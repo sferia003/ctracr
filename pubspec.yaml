@@ -25,7 +25,7 @@ dependencies:
     sdk: flutter
   firebase_core: ^0.5.3
   firebase_auth: ^0.18.4+1
-  firebase_database: ^4.4.0
+  cloud_firestore: ^0.14.4
   flutter_signin_button: ^1.1.0
   simple_animations: ^2.4.2
   google_sign_in: ^4.5.6
@@ -35,6 +35,7 @@ dependencies:
   device_preview: ^0.5.5
   connectivity_wrapper: ^1.0.4
   dots_indicator: ^1.2.0
+  short_readable_id: ^1.5.1
 
 dev_dependencies:
   flutter_test:
