@@ -1,43 +1,66 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:short_readable_id/short_readable_id.dart';
+import 'package:uuid/uuid.dart';
 
-class Event {
-  String eventId, code, organizerId, organization;
+class Event { 
+  String eventId,
+      code,
+      organizerId,
+      organization,
+      name,
+      streetAddress,
+      description,
+      cityStateZipAddress;
   DateTime start, end;
-  List<EventParticipant> participants;
+  Map<String, EventParticipant> participants;
 
-  Event(this.organizerId, this.start, this.end) {
+  Event(organizerId, start, end, name, organization, organizationCode,
+      streetAddress, description, cityStateZipAddress) {
+    this.eventId = Uuid().v4();
+    this.code = "$organizationCode-${idGenerator.generate()}";
+    this.name = name;
     this.organizerId = organizerId;
+    this.organization = organization;
     this.start = start;
     this.end = end;
+    this.streetAddress = streetAddress;
+    this.cityStateZipAddress = cityStateZipAddress;
+    this.description = description;
+    this.participants = new Map<String, EventParticipant>();
   }
 
   Event.fromSnapshot(DocumentSnapshot snapshot)
       : this.eventId = snapshot.data()["eventId"],
         this.organizerId = snapshot.data()["organizerId"],
         this.code = snapshot.data()["code"],
+        this.name = snapshot.data()["name"],
         this.start = snapshot.data()["start"],
         this.end = snapshot.data()["end"],
+        this.streetAddress = snapshot.data()["streetAddress"],
+        this.cityStateZipAddress = snapshot.data()["cityStateZipAddress"],
+        this.description = snapshot.data()["description"],
         this.participants = snapshot.data()["participants"];
 
-  toJson() {
-    return {
-      "eventId": this.eventId,
-      "organizerId": this.organizerId,
-      "code": this.code,
-      "start": this.start,
-      "end": this.end,
-      "participants": this.participants.map((e) => e.toJson()).toList()
-    };
-  }
+  toJson() => {
+        "eventId": this.eventId,
+        "organizerId": this.organizerId,
+        "name": this.name,
+        "code": this.code,
+        "start": this.start,
+        "end": this.end,
+        "streetAddress": this.streetAddress,
+        "cityStateZipAddress": this.cityStateZipAddress,
+        "description": this.description,
+        "participants": this.participants
+      };
 }
 
+
 class EventParticipant {
-  String userId;
   DateTime checkInTime;
   DateTime checkOutTime;
 
-  EventParticipant(this.userId, {this.checkInTime, this.checkOutTime});
+  EventParticipant({this.checkInTime, this.checkOutTime});
 
   checkIn(DateTime checkInTime) {
     this.checkInTime = checkInTime;
@@ -48,20 +71,9 @@ class EventParticipant {
   }
 
   EventParticipant.fromSnapshot(DocumentSnapshot snapshot)
-      : this.userId = snapshot.data()["userId"],
-        this.checkInTime = snapshot.data()["checkInTime"],
+      : this.checkInTime = snapshot.data()["checkInTime"],
         this.checkOutTime = snapshot.data()["checkOutTime"];
 
-  toJson() {
-    return {
-      "userId": this.userId,
-      "checkInTime": this.checkInTime,
-      "checkOutTime": this.checkOutTime
-    };
-  }
-}
-
-class EventInfo {
-  DateTime start, end;
-  List<EventParticipant> participants;
+  toJson() =>
+      {"checkInTime": this.checkInTime, "checkOutTime": this.checkOutTime};
 }

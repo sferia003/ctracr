@@ -1,23 +1,29 @@
-// import 'package:firebase_database/firebase_database.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-// class User {
-//   String id, username, email, password;
+class UserCT {
+  bool isOrganizer;
+  String name, email;
+  List<String> events;
 
-//   User(this.id, this.username, this.email, this.password);
+  UserCT(isOrganizer, name, email) {
+    this.isOrganizer = isOrganizer;
+    this.name = name;
+    this.email = email;
+    this.events = new List<String>();
+  }
 
-//   User.fromSnapshot(DataSnapshot snapshot)
-//       : this.id = snapshot.value["id"],
-//         username = snapshot.value["username"],
-//         email = snapshot.value["email"],
-//         password = snapshot.value["password"];
+  UserCT.fromSnapshot(DocumentSnapshot snapshot)
+      : this.isOrganizer = snapshot.data()['isOrganizer'],
+        this.name = snapshot.data()['name'],
+        this.email = snapshot.data()['email'],
+        this.events = snapshot.data()['events'];
 
-//   toJson() {
-//     return {
-//       "id": id,
-//       "username": username,
-//       "email": email,
-//       "password": password
-//     };
-
-//   }
-// }
+  toJson() {
+    return {
+      "isOrganizer": this.isOrganizer,
+      "name": this.name,
+      "email": this.email,
+      "events": this.events
+    };
+  }
+}

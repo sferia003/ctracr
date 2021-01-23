@@ -5,11 +5,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../services/size_config.dart';
 import './signup_page.dart';
-import '../services/user_account.dart';
+import '../services/firebase_service.dart';
 
 class LoginPage extends StatefulWidget {
-  final AuthService authService;
-  LoginPage({this.authService});
+  final FirebaseService firebaseService;
+  LoginPage({this.firebaseService});
 
   @override
   _LoginPageState createState() => _LoginPageState();
@@ -110,7 +110,7 @@ class _LoginPageState extends State<LoginPage> {
   Route _transition() {
     return PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) =>
-          SignUpPage(authService: widget.authService),
+          SignUpPage(firebaseService: widget.firebaseService),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         var begin = Offset(0.0, 1.0);
         var end = Offset.zero;
@@ -159,7 +159,13 @@ class _LoginPageState extends State<LoginPage> {
     return InkWell(
       onTap: () {
         if (_loginStatus == Status.normal) {
+          setState(() {
+            _loginStatus = Status.submitting;
+          });
           _submit();
+          setState(() {
+            _loginStatus = Status.normal;
+          });
         }
       },
       child: Container(
@@ -314,6 +320,7 @@ class _LoginPageState extends State<LoginPage> {
           ]),
       child: Column(
         children: <Widget>[_buildEmail(), _buildPassword()],
+        
       ),
     );
   }
@@ -334,7 +341,7 @@ class _LoginPageState extends State<LoginPage> {
   void _submit() async {
     String _errorMessage = "";
     try {
-      await widget.authService.signIn(_eC.text, _pC.text).then((_) {
+      await widget.firebaseService.signIn(_eC.text, _pC.text).then((_) {
         print("success");
       });
     } on FirebaseAuthException catch (e) {
@@ -351,6 +358,9 @@ class _LoginPageState extends State<LoginPage> {
           break;
         case "wrong-password":
           _errorMessage = "Incorrect password, please try again.";
+          break;
+        default:
+          _errorMessage = "Error Code: ${e.code}";
       }
     }
 

@@ -6,12 +6,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../services/size_config.dart';
 import './login_page.dart';
 import './signup_info.dart';
-import '../services/user_account.dart';
+import '../services/firebase_service.dart';
 
 class SignUpPage extends StatefulWidget {
-  final AuthService authService;
+  final FirebaseService firebaseService;
 
-  SignUpPage({this.authService});
+  SignUpPage({this.firebaseService});
 
   @override
   _SignUpPageState createState() => _SignUpPageState();
@@ -111,7 +111,7 @@ class _SignUpPageState extends State<SignUpPage> {
   Route _transitionLogin() {
     return PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) =>
-          LoginPage(authService: widget.authService),
+          LoginPage(firebaseService: widget.firebaseService),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         var begin = Offset(0.0, -1.0);
         var end = Offset.zero;
@@ -130,7 +130,7 @@ class _SignUpPageState extends State<SignUpPage> {
   Route _transitionSignUp() {
     return PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) =>
-          SignUpIntro(),
+          SignUpIntro(firebaseService: widget.firebaseService),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         var begin = Offset(-1.0, 0.0);
         var end = Offset.zero;
@@ -167,7 +167,13 @@ class _SignUpPageState extends State<SignUpPage> {
     return InkWell(
       onTap: () {
         if (_signUpStatus == Status.normal) {
+          setState(() {
+            _signUpStatus = Status.submitting;
+          });
           _submit();
+          setState(() {
+            _signUpStatus = Status.normal;
+          });
         }
       },
       child: Container(
@@ -371,9 +377,9 @@ class _SignUpPageState extends State<SignUpPage> {
       return;
     }
     try {
-      await widget.authService.signUp(_eC.text, _pC.text).then((_) {
-        if (widget.authService.auth.currentUser != null) {
-          widget.authService.sendEmailVerification();
+      await widget.firebaseService.signUp(_eC.text, _pC.text).then((_) {
+        if (widget.firebaseService.auth.currentUser != null) {
+          widget.firebaseService.sendEmailVerification();
           Navigator.of(context).push(_transitionSignUp());
         }
       });
