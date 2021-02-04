@@ -1,3 +1,4 @@
+import 'package:ctracer/pages/participant_home_page.dart';
 import 'package:flutter/material.dart';
 
 import 'package:connectivity_wrapper/connectivity_wrapper.dart';
@@ -111,6 +112,25 @@ class _LoginPageState extends State<LoginPage> {
     return PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) =>
           SignUpPage(firebaseService: widget.firebaseService),
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        var begin = Offset(0.0, 1.0);
+        var end = Offset.zero;
+        var curve = Curves.ease;
+        var tween =
+            Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+
+        return SlideTransition(
+          position: animation.drive(tween),
+          child: child,
+        );
+      },
+    );
+  }
+
+  Route _transitionLogged() {
+    return PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) =>
+          ParticipantHome(firebaseService: widget.firebaseService),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         var begin = Offset(0.0, 1.0);
         var end = Offset.zero;
@@ -342,7 +362,9 @@ class _LoginPageState extends State<LoginPage> {
     String _errorMessage = "";
     try {
       await widget.firebaseService.signIn(_eC.text, _pC.text).then((_) {
-        print("success");
+        Navigator.of(context).push(_transitionLogged());
+        _eC.clear();
+        _pC.clear();
       });
     } on FirebaseAuthException catch (e) {
       switch (e.code) {

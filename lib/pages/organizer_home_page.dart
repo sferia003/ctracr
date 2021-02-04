@@ -1,12 +1,13 @@
+import 'package:ctracer/models/user.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:connectivity_wrapper/connectivity_wrapper.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 import 'dart:async';
 import '../models/event.dart';
 import '../services/size_config.dart';
 import '../services/firebase_service.dart';
+import 'home_controller.dart';
 
 class OrganizerHome extends StatefulWidget {
   final FirebaseService firebaseService;
@@ -17,9 +18,10 @@ class OrganizerHome extends StatefulWidget {
 }
 
 class _OrganizerHomeState extends State<OrganizerHome> {
+  UserCT currentUser;
   String name;
-  String uuid = "asdasdsa";
   String email;
+  String uuid;
   Timer timer;
   List<Event> events = new List<Event>();
 
@@ -38,8 +40,56 @@ class _OrganizerHomeState extends State<OrganizerHome> {
     }
   }
 
+  @override 
+  void dispose() {
+    timer.cancel();
+    super.dispose();
+  }
+
+void getData() async {
+    await widget.firebaseService.firestore
+        .collection("users")
+        .doc(widget.firebaseService.auth.currentUser.uid)
+        .get()
+        .then((value) {
+      currentUser = UserCT.fromSnapshot(value);
+    });
+    name = currentUser.name;
+    email = currentUser.email;
+    uuid = widget.firebaseService.auth.currentUser.uid;
+    currentUser.events.forEach((event) {
+      widget.firebaseService.firestore
+        .collection("events")
+        .doc(event)
+        .get().then((value) {
+      events.add(Event.fromSnapshot(value));
+    });
+    });
+    
+    setState(() {});
+  }
+
+  void addDataListener() async {
+    widget.firebaseService.firestore.collection("users").doc(uuid).snapshots().listen((value) {
+      currentUser = UserCT.fromSnapshot(value);
+     name = currentUser.name;
+    email = currentUser.email;
+    uuid = widget.firebaseService.auth.currentUser.uid;
+    events = new List<Event>();
+    currentUser.events.forEach((event) {
+      widget.firebaseService.firestore
+        .collection("events")
+        .doc(event)
+        .get().then((value) {
+      events.add(Event.fromSnapshot(value));
+    });
+    });
+  });
+  }
+
   @override
   void initState() {
+    getData();
     super.initState();
     events.add(new Event(
         "organizerId",
@@ -136,30 +186,49 @@ class _OrganizerHomeState extends State<OrganizerHome> {
         // through the options in the drawer if there isn't enough vertical
         // space to fit everything.
         child: ListView(
-          // Important: Remove any padding from the ListView.
-          padding: EdgeInsets.zero,
           children: <Widget>[
-            DrawerHeader(
-              child: Text('Drawer Header'),
-              decoration: BoxDecoration(
-                color: Colors.blue,
-              ),
-            ),
+            Container(
+                padding: EdgeInsets.only(
+                    top: SizeConfig.bV * 1,
+                    left: SizeConfig.bH * 4,
+                    right: SizeConfig.bH * 4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: SizeConfig.bV * 3),
+                    Text(name,
+                        style: new TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: SizeConfig.bH * 5)),
+                    SizedBox(height: SizeConfig.bV * 1),
+                    Text(email),
+                  ],
+                )),
+            Divider(),
             ListTile(
-              title: Text('Item 1'),
+              leading: Icon(Icons.warning, color: Colors.orange),
+              title: Text('Report Positive COVID-19 Test'),
               onTap: () {
-                // Update the state of the app
-                // ...
-                // Then close the drawer
                 Navigator.pop(context);
               },
             ),
             ListTile(
-              title: Text('Item 2'),
+              leading: Icon(Icons.logout, color: Colors.black),
+              title: Text('Logout'),
               onTap: () {
-                // Update the state of the app
-                // ...
-                // Then close the drawer
+                widget.firebaseService.signOut();
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                      builder: (context) => new HomeController(
+                          firebaseService: widget.firebaseService)),
+                  (route) => route.isFirst,
+                );
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.cancel, color: Colors.red),
+              title: Text('Close'),
+              onTap: () {
                 Navigator.pop(context);
               },
             ),

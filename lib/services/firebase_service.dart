@@ -7,8 +7,6 @@ class FirebaseService {
   final FirebaseAuth auth = FirebaseAuth.instance;
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-  Stream<User> get onAuthStateChanged => auth.authStateChanges();
-
   Future<void> signIn(String email, String password) async {
     await auth.signInWithEmailAndPassword(email: email, password: password);
   }
@@ -19,9 +17,9 @@ class FirebaseService {
 
   Future<void> signUpVerification(bool isOrganizer, String firstName) async {
   if (!isVerified()) throw NotVerifiedException();
-    await auth.currentUser.reload().then((_) {
+    await auth.currentUser.reload().then((_) async {
       UserCT user = new UserCT(isOrganizer, firstName, auth.currentUser.email);
-      firestore.collection("users").doc(auth.currentUser.uid).set(user.toJson());
+      await firestore.collection("users").doc(auth.currentUser.uid).set(user.toJson());
     });
   }
 

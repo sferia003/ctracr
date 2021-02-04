@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:short_readable_id/short_readable_id.dart';
 import 'package:uuid/uuid.dart';
 
-class Event { 
+class Event {
   String eventId,
       code,
       organizerId,
@@ -55,12 +55,11 @@ class Event {
       };
 }
 
-
 class EventParticipant {
+  String uuid;
   DateTime checkInTime;
   DateTime checkOutTime;
-
-  EventParticipant({this.checkInTime, this.checkOutTime});
+  EventParticipant(this.uuid, {this.checkInTime, this.checkOutTime});
 
   checkIn(DateTime checkInTime) {
     this.checkInTime = checkInTime;
@@ -71,9 +70,13 @@ class EventParticipant {
   }
 
   EventParticipant.fromSnapshot(DocumentSnapshot snapshot)
-      : this.checkInTime = snapshot.data()["checkInTime"],
+      : this.uuid = snapshot.data()["uuid"],
+        this.checkInTime = snapshot.data()["checkInTime"],
         this.checkOutTime = snapshot.data()["checkOutTime"];
 
-  toJson() =>
-      {"checkInTime": this.checkInTime, "checkOutTime": this.checkOutTime};
+  toJson() => {
+        "uuid": this.uuid,
+        "checkInTime": this.checkInTime,
+        "checkOutTime": this.checkOutTime
+      };
 }

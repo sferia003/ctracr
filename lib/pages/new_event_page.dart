@@ -305,8 +305,9 @@ class _OrganizerNewEventState extends State<OrganizerNewEvent> {
                       icon: Icon(Icons.chevron_right),
                       onPressed: () {
                         if (currentPage == 1 && newEvent != null)
-                        _pageController.nextPage(
-                            duration: Duration(seconds: 1), curve: Curves.ease);
+                          _pageController.nextPage(
+                              duration: Duration(seconds: 1),
+                              curve: Curves.ease);
                         currentPage++;
                       },
                       color: Colors.white,
