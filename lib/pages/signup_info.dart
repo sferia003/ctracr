@@ -5,11 +5,13 @@ import 'package:connectivity_wrapper/connectivity_wrapper.dart';
 import '../services/firebase_service.dart';
 import 'organizer_home_page.dart';
 import 'participant_home_page.dart';
+import '../models/user.dart';
 
 class SignUpIntro extends StatefulWidget {
   final FirebaseService firebaseService;
+  UserCT user;
 
-  SignUpIntro({this.firebaseService});
+  SignUpIntro(thisuser, {this.firebaseService});
   @override
   _SignUpIntroState createState() => _SignUpIntroState();
 }
@@ -170,8 +172,8 @@ class _SignUpIntroState extends State<SignUpIntro> {
   Route _transitionHome(bool isAdministrator) {
     return PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) => isAdministrator
-          ? OrganizerHome(firebaseService: widget.firebaseService)
-          : ParticipantHome(
+          ? OrganizerHome(widget.user, firebaseService: widget.firebaseService)
+          : ParticipantHome(widget.user, 
               firebaseService: widget.firebaseService,
             ),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {

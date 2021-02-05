@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ctracer/models/user.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -5,104 +6,122 @@ import 'package:connectivity_wrapper/connectivity_wrapper.dart';
 
 import 'dart:async';
 import '../models/event.dart';
+import 'new_event_page.dart';
 import '../services/size_config.dart';
 import '../services/firebase_service.dart';
 import 'home_controller.dart';
 
 class OrganizerHome extends StatefulWidget {
   final FirebaseService firebaseService;
-  OrganizerHome({this.firebaseService});
+  UserCT user;
+  OrganizerHome(this.user, {this.firebaseService});
 
   @override
   _OrganizerHomeState createState() => _OrganizerHomeState();
 }
 
 class _OrganizerHomeState extends State<OrganizerHome> {
-  UserCT currentUser;
   String name;
   String email;
   String uuid;
-  Timer timer;
   List<Event> events = new List<Event>();
+  var streams = new List<StreamSubscription<DocumentSnapshot>>();
 
-  Widget _checkEventStatus(Event event) {
-    if (event.participants[uuid]?.checkInTime ?? true) {
-      return TextButton(
-        child: const Text('Check-In'),
-        onPressed: _isDisabled(event),
-      );
-    } else if (event.participants[uuid]?.checkInTime ?? true) {
-      return TextButton(
-          child: const Text('Check-Out'),
-          onPressed: () => _checkOut(event.eventId));
-    } else {
-      return Text("You May No Longer Attend This Event");
-    }
-  }
-
-  @override 
+  @override
   void dispose() {
-    timer.cancel();
+    streams.forEach((element) {
+      element.cancel();
+    });
     super.dispose();
   }
 
-void getData() async {
-    await widget.firebaseService.firestore
+  void addDataListener() async {
+    streams.add(widget.firebaseService.firestore
         .collection("users")
-        .doc(widget.firebaseService.auth.currentUser.uid)
-        .get()
-        .then((value) {
-      currentUser = UserCT.fromSnapshot(value);
+        .doc(uuid)
+        .snapshots()
+        .listen((value) {
+      widget.user = UserCT.fromSnapshot(value);
+      name = widget.user.name;
+      email = widget.user.email;
+      uuid = widget.firebaseService.auth.currentUser.uid;
+      var sEvents = widget.user.events;
+      events = new List<Event>();
+      sEvents.forEach((event) async {
+        Event current;
+        await widget.firebaseService.firestore
+            .collection("events")
+            .doc(event)
+            .get()
+            .then((value) {
+          current = Event.fromSnapshot(value);
+          streams.add(widget.firebaseService.firestore
+              .collection("events")
+              .doc(current.eventId)
+              .snapshots()
+              .listen((event) {
+            setState(() {
+              events.remove(current);
+              addEvent(Event.fromSnapshot(event));
+            });
+          }));
+        });
+      });
+    }));
+    setState(() {
     });
-    name = currentUser.name;
-    email = currentUser.email;
-    uuid = widget.firebaseService.auth.currentUser.uid;
-    currentUser.events.forEach((event) {
-      widget.firebaseService.firestore
-        .collection("events")
-        .doc(event)
-        .get().then((value) {
-      events.add(Event.fromSnapshot(value));
-    });
-    });
-    
-    setState(() {});
   }
 
-  void addDataListener() async {
-    widget.firebaseService.firestore.collection("users").doc(uuid).snapshots().listen((value) {
-      currentUser = UserCT.fromSnapshot(value);
-     name = currentUser.name;
-    email = currentUser.email;
-    uuid = widget.firebaseService.auth.currentUser.uid;
-    events = new List<Event>();
-    currentUser.events.forEach((event) {
-      widget.firebaseService.firestore
-        .collection("events")
-        .doc(event)
-        .get().then((value) {
-      events.add(Event.fromSnapshot(value));
+  DataTable displayData(Map<String, EventParticipant> data) {
+    return DataTable(
+      columns: const <DataColumn>[
+        DataColumn(
+          label: Text(
+            'Name',
+            style: TextStyle(fontStyle: FontStyle.italic),
+          ),
+        ),
+        DataColumn(
+          label: Text(
+            'Positive',
+            style: TextStyle(fontStyle: FontStyle.italic),
+          ),
+        ),
+        DataColumn(
+          label: Text(
+            'Email',
+            style: TextStyle(fontStyle: FontStyle.italic),
+          ),
+        ),
+      ],
+      rows: <DataRow>[
+        for (EventParticipant v in data.values) 
+           DataRow( 
+             cells: <DataCell>[
+            DataCell(Text(v.name)),
+            DataCell(Checkbox(value: v.positive, onChanged: (bool) {},)),
+            DataCell(Text(v.email))
+          ])
+        ]);
+
+  }
+
+  void addEvent(Event event) {
+    events.add(event);
+    events.sort((a, b) {
+      var aStart = a.start;
+      var bStart = b.start;
+      return aStart.compareTo(bStart);
     });
-    });
-  });
   }
 
   @override
   void initState() {
-    getData();
+    name = widget.user.name;
+    email = widget.user.email;
+    uuid = widget.firebaseService.auth.currentUser.uid;
+    addDataListener();
     super.initState();
-    events.add(new Event(
-        "organizerId",
-        DateTime.now(),
-        DateTime.now().add(new Duration(minutes: 60)),
-        "name",
-        "organization",
-        "NOM",
-        "405 Bank",
-        "description",
-        "cityStateZipAddress"));
-    timer = new Timer.periodic(
-        new Duration(minutes: 1), (Timer t) => setState(() {}));
   }
 
   ExpansionTile _eventTile(Event event) {
@@ -164,9 +183,52 @@ void getData() async {
           alignment: Alignment.centerLeft,
           child: Text(event.description),
         ),
-        Align(
-            alignment: Alignment.bottomRight, child: _checkEventStatus(event)),
+        SizedBox(
+          height: SizeConfig.bV * 5,
+        ),
+        if (event.participants.isNotEmpty)
+          displayData(event.participants),
       ],
+    );
+  }
+
+  Route _transition() {
+    return PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) =>
+          HomeController(firebaseService: widget.firebaseService),
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        var begin = Offset(0.0, 1.0);
+        var end = Offset.zero;
+        var curve = Curves.ease;
+        var tween =
+            Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+
+        return SlideTransition(
+          position: animation.drive(tween),
+          child: child,
+        );
+      },
+    );
+  }
+
+  Route _transitionE() {
+    return PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) =>
+          OrganizerNewEvent(
+        firebaseService: widget.firebaseService,
+      ),
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        var begin = Offset(0.0, -1.0);
+        var end = Offset.zero;
+        var curve = Curves.ease;
+        var tween =
+            Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+
+        return SlideTransition(
+          position: animation.drive(tween),
+          child: child,
+        );
+      },
     );
   }
 
@@ -206,30 +268,14 @@ void getData() async {
                 )),
             Divider(),
             ListTile(
-              leading: Icon(Icons.warning, color: Colors.orange),
-              title: Text('Report Positive COVID-19 Test'),
-              onTap: () {
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
               leading: Icon(Icons.logout, color: Colors.black),
               title: Text('Logout'),
               onTap: () {
                 widget.firebaseService.signOut();
                 Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(
-                      builder: (context) => new HomeController(
-                          firebaseService: widget.firebaseService)),
+                  _transition(),
                   (route) => route.isFirst,
                 );
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.cancel, color: Colors.red),
-              title: Text('Close'),
-              onTap: () {
-                Navigator.pop(context);
               },
             ),
           ],
@@ -252,17 +298,13 @@ void getData() async {
           IconButton(
             icon: const Icon(Icons.library_add),
             color: Colors.black,
-            tooltip: 'Show Snackbar',
+            tooltip: 'Create an Event',
             onPressed: () {
-              print("Asa");
+              Navigator.of(context).push(_transitionE());
             },
           ),
         ],
       ),
     );
   }
-
-  _isDisabled(Event event) {}
-
-  _checkOut(String eventId) {}
 }

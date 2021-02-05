@@ -1,24 +1,32 @@
 import 'package:ctracer/models/event.dart';
+import 'package:ctracer/services/firebase_service.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/size_config.dart';
+import 'package:date_time_picker/date_time_picker.dart';
+import '../models/user.dart';
 
 class OrganizerNewEvent extends StatefulWidget {
+  FirebaseService firebaseService;
+
+  OrganizerNewEvent({this.firebaseService});
   @override
   _OrganizerNewEventState createState() => _OrganizerNewEventState();
 }
 
 class _OrganizerNewEventState extends State<OrganizerNewEvent> {
-  final PageController _pageController = PageController(initialPage: 0);
-  DateTime selectedDate = DateTime.now();
-  Event newEvent;
-  int currentPage = 0;
+  final TextEditingController _oC = TextEditingController();
+  final TextEditingController _orC = TextEditingController();
+  final TextEditingController _orCC = TextEditingController();
+  final TextEditingController _fD = TextEditingController();
+  final TextEditingController _lD = TextEditingController();
+  final TextEditingController _nC = TextEditingController();
+  final TextEditingController _sC = TextEditingController();
+  final TextEditingController _dC = TextEditingController();
 
-  @override
-  void dispose() {
-    super.dispose();
-    _pageController.dispose();
-  }
+  DateTime firstDate;
+  DateTime endDate;
+  Event newEvent;
 
   Container _buildEventInfo() {
     return Container(
@@ -34,7 +42,10 @@ class _OrganizerNewEventState extends State<OrganizerNewEvent> {
       child: Column(
         children: <Widget>[
           _buildName(),
+          _buildOrg(),
+          _buildOrgCode(),
           _buildStreet(),
+          _buildDatePicker(),
           _buildAddressOther(),
           _buildDescription(),
         ],
@@ -42,46 +53,43 @@ class _OrganizerNewEventState extends State<OrganizerNewEvent> {
     );
   }
 
-  Container _buildExtraEventInfo() {
+  Container _selectDate() {
     return Container(
-      decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(SizeConfig.bH * 2),
-          boxShadow: [
-            BoxShadow(
-                color: Color.fromRGBO(36, 92, 196, .3),
-                blurRadius: SizeConfig.bV * 2,
-                offset: Offset(0, SizeConfig.bV * 2))
-          ]),
-      child: Column(
-        children: <Widget>[_buildDatePicker()],
+      width: SizeConfig.bH * 40,
+      child: DateTimePicker(
+        type: DateTimePickerType.dateTime,
+        initialValue: null,
+        firstDate: DateTime(2000),
+        lastDate: DateTime(2100),
+        controller: _fD,
+        dateLabelText: 'Start Time',
       ),
     );
   }
 
-  _selectDate(BuildContext context) async {
-    final DateTime picked = await showDatePicker(
-      context: context,
-      initialDate: selectedDate, // Refer step 1
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2025),
+  Container _selectEndDate() {
+    return Container(
+      width: SizeConfig.bH * 40,
+      child: DateTimePicker(
+        type: DateTimePickerType.dateTime,
+        initialValue: null,
+        firstDate: DateTime(2000),
+        lastDate: DateTime(2100),
+        controller: _lD,
+        dateLabelText: 'End Time',
+
+      ),
     );
-    if (picked != null && picked != selectedDate)
-      setState(() {
-        selectedDate = picked;
-      });
   }
 
-  RaisedButton _buildDatePicker() {
-    return RaisedButton(
-      padding: EdgeInsets.all(SizeConfig.bV * 1),
-      onPressed: () => _selectDate(context), // Refer step 3
-      child: Text(
-        'Select date',
-        style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-      ),
-      color: Colors.greenAccent,
-    );
+  Container _buildDatePicker() {
+    return Container(
+        padding: EdgeInsets.all(SizeConfig.bV * 1),
+        decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: Colors.grey[200]))),
+        child: Row(
+          children: [_selectDate(), Spacer(), _selectEndDate()],
+        ));
   }
 
   BoxDecoration _buildLoginTemplate() {
@@ -99,10 +107,44 @@ class _OrganizerNewEventState extends State<OrganizerNewEvent> {
             border: Border(bottom: BorderSide(color: Colors.grey[200]))),
         child: TextFormField(
           maxLines: 1,
-          keyboardType: TextInputType.emailAddress,
           autofocus: false,
+          controller: _nC,
           decoration: InputDecoration(
               hintText: "Event Name",
+              hintStyle:
+                  TextStyle(fontSize: SizeConfig.bH * 5, color: Colors.grey),
+              border: InputBorder.none),
+        ));
+  }
+
+  Container _buildOrg() {
+    return Container(
+        padding: EdgeInsets.all(SizeConfig.bV * 1),
+        decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: Colors.grey[200]))),
+        child: TextFormField(
+          maxLines: 1,
+          autofocus: false,
+          controller: _orC,
+          decoration: InputDecoration(
+              hintText: "Organization",
+              hintStyle:
+                  TextStyle(fontSize: SizeConfig.bH * 5, color: Colors.grey),
+              border: InputBorder.none),
+        ));
+  }
+
+  Container _buildOrgCode() {
+    return Container(
+        padding: EdgeInsets.all(SizeConfig.bV * 1),
+        decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: Colors.grey[200]))),
+        child: TextFormField(
+          maxLines: 1,
+          autofocus: false,
+          controller: _orCC,
+          decoration: InputDecoration(
+              hintText: "Organization Code",
               hintStyle:
                   TextStyle(fontSize: SizeConfig.bH * 5, color: Colors.grey),
               border: InputBorder.none),
@@ -116,8 +158,8 @@ class _OrganizerNewEventState extends State<OrganizerNewEvent> {
             border: Border(bottom: BorderSide(color: Colors.grey[200]))),
         child: TextFormField(
           maxLines: 1,
-          keyboardType: TextInputType.emailAddress,
           autofocus: false,
+          controller: _sC,
           decoration: InputDecoration(
               hintText: "Street Name",
               hintStyle:
@@ -133,8 +175,8 @@ class _OrganizerNewEventState extends State<OrganizerNewEvent> {
             border: Border(bottom: BorderSide(color: Colors.grey[200]))),
         child: TextFormField(
           maxLines: 1,
-          keyboardType: TextInputType.emailAddress,
           autofocus: false,
+          controller: _oC,
           decoration: InputDecoration(
               hintText: "City, State Zip",
               hintStyle:
@@ -150,8 +192,8 @@ class _OrganizerNewEventState extends State<OrganizerNewEvent> {
             border: Border(bottom: BorderSide(color: Colors.grey[200]))),
         child: TextFormField(
           maxLines: 3,
-          keyboardType: TextInputType.emailAddress,
           autofocus: false,
+          controller: _dC,
           decoration: InputDecoration(
               hintText: "Description",
               hintStyle:
@@ -223,51 +265,40 @@ class _OrganizerNewEventState extends State<OrganizerNewEvent> {
     );
   }
 
+  void _createEvent() async {
+      newEvent = Event(widget.firebaseService.auth.currentUser.uid, DateTime.parse(_fD.text), DateTime.parse(_lD.text), _nC.text, _orC.text,
+          _orCC.text, _sC.text, _dC.text, _oC.text);
+
+      await widget.firebaseService.firestore.collection("events").doc(newEvent.eventId).set(newEvent.toJson());
+      await widget.firebaseService.firestore.collection("event_ids").doc(newEvent.code).set({"id": newEvent.eventId});
+      var userEvents = UserCT.fromSnapshot(await widget.firebaseService.firestore.collection("users").doc(widget.firebaseService.auth.currentUser.uid).get()).events;
+      userEvents.add(newEvent.eventId);
+      await widget.firebaseService.firestore.collection("users").doc(widget.firebaseService.auth.currentUser.uid).update({"events": userEvents});
+      Navigator.of(context).pop();
+
+  }
+
   @override
   Widget build(BuildContext context) {
     SizeConfig().init(context);
     return Scaffold(
         resizeToAvoidBottomInset: false,
         body: Stack(children: <Widget>[
-          PageView(
-            pageSnapping: true,
-            controller: _pageController,
-            physics: new NeverScrollableScrollPhysics(),
-            children: [
-              Container(
-                color: Colors.white,
-                child: Column(
-                  children: [
-                    Spacer(),
-                    Container(
-                      decoration: _buildLoginTemplate(),
-                      child: Padding(
-                        padding: EdgeInsets.all(SizeConfig.bH * 7),
-                        child: _buildEventInfo(),
-                      ),
-                    ),
-                    Spacer()
-                  ],
+          Container(
+            color: Colors.white,
+            child: Column(
+              children: [
+                Spacer(flex: 2),
+                Container(
+                  decoration: _buildLoginTemplate(),
+                  child: Padding(
+                    padding: EdgeInsets.all(SizeConfig.bH * 7),
+                    child: _buildEventInfo(),
+                  ),
                 ),
-              ),
-              Container(
-                color: Colors.white,
-                child: Column(
-                  children: [
-                    Spacer(),
-                    Container(
-                      decoration: _buildLoginTemplate(),
-                      child: Padding(
-                        padding: EdgeInsets.all(SizeConfig.bH * 7),
-                        child: _buildExtraEventInfo(),
-                      ),
-                    ),
-                    Spacer()
-                  ],
-                ),
-              ),
-              Container(color: Colors.white)
-            ],
+                Spacer()
+              ],
+            ),
           ),
           Align(
             alignment: Alignment.topCenter,
@@ -281,39 +312,25 @@ class _OrganizerNewEventState extends State<OrganizerNewEvent> {
                   minHeight: 5 * SizeConfig.bV, maxHeight: 7 * SizeConfig.bV),
               child: Row(
                 children: <Widget>[
-                  Expanded(
-                    flex: 1,
-                    child: IconButton(
-                      icon: Icon(Icons.chevron_left),
-                      onPressed: () {
-                        _pageController.previousPage(
-                            duration: Duration(seconds: 1), curve: Curves.ease);
-                        currentPage--;
-                      },
-                      color: Colors.white,
-                      iconSize: 6 * SizeConfig.bH,
-                    ),
-                  ),
+                  Spacer(),
                   Text(
                     "Create An Event",
                     style: TextStyle(
                         color: Colors.white, fontWeight: FontWeight.bold),
                   ),
-                  Expanded(
-                    flex: 1,
-                    child: IconButton(
-                      icon: Icon(Icons.chevron_right),
+                  Spacer(),
+                  FlatButton(
+                      color: Color(0xff1166f7),
+                      child: const Text(
+                        "Create",
+                        style: TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
                       onPressed: () {
-                        if (currentPage == 1 && newEvent != null)
-                          _pageController.nextPage(
-                              duration: Duration(seconds: 1),
-                              curve: Curves.ease);
-                        currentPage++;
-                      },
-                      color: Colors.white,
-                      iconSize: 6 * SizeConfig.bH,
-                    ),
-                  ),
+                        print("sad");
+                        _createEvent();
+                      }),
+                  Spacer()
                 ],
               ),
             ),

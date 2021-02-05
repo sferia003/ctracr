@@ -21,7 +21,6 @@ class _HomeControllerState extends State<HomeController> {
   UserCT currentUser;
   void authStateListener() {
     FirebaseAuth.instance.authStateChanges().listen((firebaseUser) {
-      setState(() {
         if (firebaseUser != null) {
         widget.firebaseService.firestore
             .collection("users")
@@ -34,7 +33,9 @@ class _HomeControllerState extends State<HomeController> {
       } else {
         authenticationStatus = AuthStatus.NOT_DETERMINED;
       }
+
       });
+    setState(() {
     });
   }
   @override
@@ -47,8 +48,8 @@ class _HomeControllerState extends State<HomeController> {
   Widget build(BuildContext context) {
     return (authenticationStatus == AuthStatus.HANDLED)
         ? (currentUser.isOrganizer)
-            ? OrganizerHome(firebaseService: widget.firebaseService)
-            : ParticipantHome(firebaseService: widget.firebaseService)
+            ? OrganizerHome(currentUser, firebaseService: widget.firebaseService)
+            : ParticipantHome(currentUser, firebaseService: widget.firebaseService)
         : LoginPage(firebaseService: widget.firebaseService);
   }
 }

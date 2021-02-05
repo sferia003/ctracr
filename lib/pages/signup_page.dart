@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:connectivity_wrapper/connectivity_wrapper.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../models/user.dart';
 import '../services/size_config.dart';
 import './login_page.dart';
 import './signup_info.dart';
@@ -28,6 +29,7 @@ class _SignUpPageState extends State<SignUpPage> {
   final TextEditingController _pC = TextEditingController();
   final TextEditingController _cPC = TextEditingController();
   Status _signUpStatus;
+  UserCT user;
 
   @override
   void initState() {
@@ -130,7 +132,7 @@ class _SignUpPageState extends State<SignUpPage> {
   Route _transitionSignUp() {
     return PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) =>
-          SignUpIntro(firebaseService: widget.firebaseService),
+          SignUpIntro(user , firebaseService: widget.firebaseService),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         var begin = Offset(-1.0, 0.0);
         var end = Offset.zero;
@@ -377,7 +379,7 @@ class _SignUpPageState extends State<SignUpPage> {
       return;
     }
     try {
-      await widget.firebaseService.signUp(_eC.text, _pC.text).then((_) {
+      user = await widget.firebaseService.signUp(_eC.text, _pC.text).then((_) {
         if (widget.firebaseService.auth.currentUser != null) {
           widget.firebaseService.sendEmailVerification();
           Navigator.of(context).push(_transitionSignUp());

@@ -1,3 +1,4 @@
+import 'package:ctracer/pages/organizer_home_page.dart';
 import 'package:ctracer/pages/participant_home_page.dart';
 import 'package:flutter/material.dart';
 
@@ -5,6 +6,7 @@ import 'package:connectivity_wrapper/connectivity_wrapper.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../services/size_config.dart';
+import '../models/user.dart';
 import './signup_page.dart';
 import '../services/firebase_service.dart';
 
@@ -26,6 +28,7 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _eC = TextEditingController();
   final TextEditingController _pC = TextEditingController();
   Status _loginStatus;
+  UserCT user;
 
   @override
   void initState() {
@@ -81,11 +84,7 @@ class _LoginPageState extends State<LoginPage> {
                                   child: _buildLoginButton(),
                                   offlineWidget: _buildOfflineLoginButton()),
                               SizedBox(
-                                height: SizeConfig.bV * 2,
-                              ),
-                              _buildForgotPassword(),
-                              SizedBox(
-                                height: SizeConfig.bV * 5,
+                                height: SizeConfig.bV * 7,
                               ),
                               _buildCreateOne(context),
                               SizedBox(height: SizeConfig.bV * 3),
@@ -129,8 +128,9 @@ class _LoginPageState extends State<LoginPage> {
 
   Route _transitionLogged() {
     return PageRouteBuilder(
-      pageBuilder: (context, animation, secondaryAnimation) =>
-          ParticipantHome(firebaseService: widget.firebaseService),
+      pageBuilder: (context, animation, secondaryAnimation) => (user.isOrganizer) ? 
+          OrganizerHome(user, firebaseService: widget.firebaseService):
+          ParticipantHome(user, firebaseService: widget.firebaseService),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         var begin = Offset(0.0, 1.0);
         var end = Offset.zero;
@@ -142,18 +142,6 @@ class _LoginPageState extends State<LoginPage> {
           position: animation.drive(tween),
           child: child,
         );
-      },
-    );
-  }
-
-  InkWell _buildForgotPassword() {
-    return InkWell(
-      child: Text(
-        "Forgot Password?",
-        style: TextStyle(color: Colors.grey, fontSize: SizeConfig.bH * 4),
-      ),
-      onTap: () {
-        print("clicked");
       },
     );
   }
@@ -359,13 +347,13 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _submit() async {
-    String _errorMessage = "";
+    String _errorMessage = "";  
     try {
-      await widget.firebaseService.signIn(_eC.text, _pC.text).then((_) {
-        Navigator.of(context).push(_transitionLogged());
+      user = await widget.firebaseService.signIn(_eC.text, _pC.text);
+      Navigator.of(context).push(_transitionLogged());
         _eC.clear();
         _pC.clear();
-      });
+      
     } on FirebaseAuthException catch (e) {
       switch (e.code) {
         case "invalid-email":

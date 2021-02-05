@@ -7,20 +7,23 @@ class FirebaseService {
   final FirebaseAuth auth = FirebaseAuth.instance;
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-  Future<void> signIn(String email, String password) async {
+  Future<UserCT> signIn(String email, String password) async {
     await auth.signInWithEmailAndPassword(email: email, password: password);
+    return UserCT.fromSnapshot(await firestore.collection("users").doc(auth.currentUser.uid).get());
   }
 
   Future<void> signUp(String email, String password) async {
     await auth.createUserWithEmailAndPassword(email: email, password: password);
   }
 
-  Future<void> signUpVerification(bool isOrganizer, String firstName) async {
+  Future<UserCT> signUpVerification(bool isOrganizer, String firstName) async {
   if (!isVerified()) throw NotVerifiedException();
+  UserCT user;
     await auth.currentUser.reload().then((_) async {
-      UserCT user = new UserCT(isOrganizer, firstName, auth.currentUser.email);
+      user = new UserCT(isOrganizer, firstName, false, auth.currentUser.email);
       await firestore.collection("users").doc(auth.currentUser.uid).set(user.toJson());
     });
+    return user;
   }
 
   Future<void> signOut() async {
