@@ -75,16 +75,16 @@ class _ParticipantHomeState extends State<ParticipantHome> {
                           .collection("users")
                           .doc(widget.firebaseService.auth.currentUser.uid)
                           .update({"events": userEvents});
-                        Map<String, EventParticipant> currentParticipants = Event.fromSnapshot(await widget
+                        List<EventParticipant> currentParticipants = Event.fromSnapshot(await widget
                               .firebaseService.firestore
                               .collection("events")
                               .doc(value.data()["id"])
                               .get()).participants;
-                        currentParticipants[widget.firebaseService.auth.currentUser.uid] = new EventParticipant(name, false, false, email);
+                        currentParticipants.add(new EventParticipant(name, false, false, email, uuid));
                         widget.firebaseService.firestore
                           .collection("events")
                           .doc(value.data()["id"])
-                          .update({"participants": {widget.firebaseService.auth.currentUser.uid: currentParticipants[widget.firebaseService.auth.currentUser.uid].toJson()}});
+                          .update({"participants": {widget.firebaseService.auth.currentUser.uid: currentParticipants.map((e) => e.toJson())}});
                       Navigator.of(context).pop();
                       }
                     } else {
@@ -107,7 +107,7 @@ class _ParticipantHomeState extends State<ParticipantHome> {
   }
 
   Future<void> _checkOut(eventUUID) {
-    print("checked in");
+    widget.firebaseService.firestore.collection("events").doc(eventUUID).set({"participants": {uuid: {"checkOutTime": DateTime.now()}}});
     setState(() {});
   }
 
@@ -155,12 +155,12 @@ Future<void> _displayError(_errorMessage) async {
   }
 
   Widget _checkEventStatus(Event event) {
-    if (event.participants[uuid]?.checkInTime ?? true && !(DateTime.now().isAfter(event.end))) {
+    if (event.participants.firstWhere((element) => element.uuid == uuid)?.checkInTime ?? true && !(DateTime.now().isAfter(event.end))) {
       return TextButton(
         child: const Text('Check-In'),
         onPressed: _isDisabled(event),
       );
-    } else if (event.participants[uuid]?.checkInTime ?? true && !(DateTime.now().isAfter(event.end))) {
+  } else if (event.participants.firstWhere((element) => element.uuid == uuid)?.checkOutTime ?? true && !(DateTime.now().isAfter(event.end))) {
       return TextButton(
           child: const Text('Check-Out'),
           onPressed: () => _checkOut(event.eventId));

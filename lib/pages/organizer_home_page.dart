@@ -72,7 +72,7 @@ class _OrganizerHomeState extends State<OrganizerHome> {
     });
   }
 
-  DataTable displayData(Map<String, EventParticipant> data) {
+  DataTable displayData(List<EventParticipant> data) {
     return DataTable(
       columns: const <DataColumn>[
         DataColumn(
@@ -95,7 +95,7 @@ class _OrganizerHomeState extends State<OrganizerHome> {
         ),
       ],
       rows: <DataRow>[
-        for (EventParticipant v in data.values) 
+        for (EventParticipant v in data) 
            DataRow( 
              cells: <DataCell>[
             DataCell(Text(v.name)),

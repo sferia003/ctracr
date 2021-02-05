@@ -1,4 +1,4 @@
-import 'dart:collection';
+import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:short_readable_id/short_readable_id.dart';
@@ -14,7 +14,7 @@ class Event {
       description,
       cityStateZipAddress;
   DateTime start, end;
-  Map<String, EventParticipant> participants;
+  List<EventParticipant> participants;
 
   Event(organizerId, start, end, name, organization, organizationCode,
       streetAddress, description, cityStateZipAddress) {
@@ -28,7 +28,7 @@ class Event {
     this.streetAddress = streetAddress;
     this.cityStateZipAddress = cityStateZipAddress;
     this.description = description;
-    this.participants = new Map<String, EventParticipant>();
+    this.participants = new List<EventParticipant>();
   }
 
   Event.fromSnapshot(DocumentSnapshot snapshot)
@@ -42,8 +42,7 @@ class Event {
         this.streetAddress = snapshot.data()["streetAddress"],
         this.cityStateZipAddress = snapshot.data()["cityStateZipAddress"],
         this.description = snapshot.data()["description"],
-        this.participants = new Map<String, EventParticipant>.from(snapshot.data()["participants"]);
-          
+        this.participants = snapshot.data()["participants"];
 
   toJson() => {
         "eventId": this.eventId,
@@ -56,7 +55,7 @@ class Event {
         "streetAddress": this.streetAddress,
         "cityStateZipAddress": this.cityStateZipAddress,
         "description": this.description,
-        "participants": this.participants.cast<String, EventParticipant>()
+        "participants": this.participants,
       };
 
   @override
@@ -65,13 +64,13 @@ class Event {
 }
 
 class EventParticipant {
-  String name, email;
+  String name, email, uuid;
   bool positive;
   DateTime checkInTime;
   DateTime checkOutTime;
   bool contacted;
 
-  EventParticipant(this.name, this.contacted, this.positive, this.email,
+  EventParticipant(this.name, this.contacted, this.positive, this.email, this.uuid,
       {this.checkInTime, this.checkOutTime});
 
   checkIn(DateTime checkInTime) {
@@ -92,10 +91,13 @@ class EventParticipant {
         this.email = snapshot.data()["email"],
         this.checkInTime = snapshot.data()["checkInTime"],
         this.contacted = snapshot.data()["contacted"],
+        this.uuid = snapshot.data()["uuid"],
         this.checkOutTime = snapshot.data()["checkOutTime"];
+
 
   toJson() => {
         "name": this.name,
+        "uuid": this.uuid,
         "positive": this.positive,
         "email": this.email,
         "checkInTime": this.checkInTime,

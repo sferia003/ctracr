@@ -24,9 +24,9 @@ dependencies:
   flutter:
     sdk: flutter
   date_time_picker: ^1.1.1
-  firebase_core: ^0.5.3
-  firebase_auth: ^0.18.4+1
-  cloud_firestore: ^0.14.4
+  firebase_core: ^0.7.0
+  firebase_auth: ^0.20.0+1
+  cloud_firestore: ^0.16.0
   flutter_signin_button: ^1.1.0
   simple_animations: ^2.4.2
   google_sign_in: ^4.5.6
