@@ -156,17 +156,16 @@ class _SignUpIntroState extends State<SignUpIntro> {
   void _submit() async {
     bool isAdministrator = _isAdministrator;
 
-    await widget.firebaseService.auth.currentUser.reload().then((value) async {
-      widget.user = await widget.firebaseService
-          .signUpVerification(_isAdministrator, _nC.text)
-          .catchError((e) {
-        _displayError(
-            "Please verify the email you signed up with before proceeding.");
-        return;
-      });
-    });
+    await widget.firebaseService.auth.currentUser.reload();
 
-    Navigator.of(context).push(_transitionHome(isAdministrator));
+    widget.user = await widget.firebaseService
+        .signUpVerification(_isAdministrator, _nC.text)
+        .catchError((e) {
+      _displayError(
+          "Please verify the email you signed up with before proceeding.");
+    });
+    if (widget.user != null)
+      Navigator.of(context).push(_transitionHome(isAdministrator));
   }
 
   Route _transitionHome(bool isAdministrator) {

@@ -1,6 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:ctracer/models/event.dart';
-
 class UserCT {
   bool isOrganizer, isPositive, isNotified;
   String name, email;
