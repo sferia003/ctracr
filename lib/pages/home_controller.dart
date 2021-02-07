@@ -27,13 +27,14 @@ class _HomeControllerState extends State<HomeController> {
             .doc(widget.firebaseService.auth.currentUser.uid)
             .get()
             .then((value) {
+              if (value.exists) {
           currentUser = UserCT.fromSnapshot(value);
           authenticationStatus = AuthStatus.HANDLED;
+              }
         });
       } else {
         authenticationStatus = AuthStatus.NOT_DETERMINED;
       }
-
       });
     setState(() {
     });
@@ -41,6 +42,7 @@ class _HomeControllerState extends State<HomeController> {
   @override
   void initState() {
     super.initState();
+    widget.firebaseService.signOut();
     authStateListener();
   }
 

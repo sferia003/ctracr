@@ -68,42 +68,40 @@ class _OrganizerHomeState extends State<OrganizerHome> {
         });
       });
     }));
-    setState(() {
-    });
+    setState(() {});
   }
 
   DataTable displayData(List<EventParticipant> data) {
-    return DataTable(
-      columns: const <DataColumn>[
-        DataColumn(
-          label: Text(
-            'Name',
-            style: TextStyle(fontStyle: FontStyle.italic),
-          ),
+    return DataTable(columns: const <DataColumn>[
+      DataColumn(
+        label: Text(
+          'Name',
+          style: TextStyle(fontStyle: FontStyle.italic),
         ),
-        DataColumn(
-          label: Text(
-            'Positive',
-            style: TextStyle(fontStyle: FontStyle.italic),
-          ),
+      ),
+      DataColumn(
+        label: Text(
+          'Positive',
+          style: TextStyle(fontStyle: FontStyle.italic),
         ),
-        DataColumn(
-          label: Text(
-            'Email',
-            style: TextStyle(fontStyle: FontStyle.italic),
-          ),
+      ),
+      DataColumn(
+        label: Text(
+          'Email',
+          style: TextStyle(fontStyle: FontStyle.italic),
         ),
-      ],
-      rows: <DataRow>[
-        for (EventParticipant v in data) 
-           DataRow( 
-             cells: <DataCell>[
-            DataCell(Text(v.name)),
-            DataCell(Checkbox(value: v.positive, onChanged: (bool) {},)),
-            DataCell(Text(v.email))
-          ])
-        ]);
-
+      ),
+    ], rows: <DataRow>[
+      for (EventParticipant v in data)
+        DataRow(cells: <DataCell>[
+          DataCell(Text(v.name)),
+          DataCell(Checkbox(
+            value: v.positive,
+            onChanged: (bool) {},
+          )),
+          DataCell(Text(v.email))
+        ])
+    ]);
   }
 
   void addEvent(Event event) {
@@ -187,7 +185,12 @@ class _OrganizerHomeState extends State<OrganizerHome> {
           height: SizeConfig.bV * 5,
         ),
         if (event.participants.isNotEmpty)
-          displayData(event.participants),
+          SingleChildScrollView(
+              scrollDirection: Axis.vertical,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: displayData(event.participants),
+              ))
       ],
     );
   }
@@ -244,9 +247,6 @@ class _OrganizerHomeState extends State<OrganizerHome> {
             }),
       ),
       drawer: Drawer(
-        // Add a ListView to the drawer. This ensures the user can scroll
-        // through the options in the drawer if there isn't enough vertical
-        // space to fit everything.
         child: ListView(
           children: <Widget>[
             Container(

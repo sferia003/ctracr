@@ -9,7 +9,8 @@ class FirebaseService {
 
   Future<UserCT> signIn(String email, String password) async {
     await auth.signInWithEmailAndPassword(email: email, password: password);
-    return UserCT.fromSnapshot(await firestore.collection("users").doc(auth.currentUser.uid).get());
+    return UserCT.fromSnapshot(
+        await firestore.collection("users").doc(auth.currentUser.uid).get());
   }
 
   Future<void> signUp(String email, String password) async {
@@ -17,12 +18,15 @@ class FirebaseService {
   }
 
   Future<UserCT> signUpVerification(bool isOrganizer, String firstName) async {
-  if (!isVerified()) throw NotVerifiedException();
-  UserCT user;
-    await auth.currentUser.reload().then((_) async {
-      user = new UserCT(isOrganizer, firstName, false, auth.currentUser.email);
-      await firestore.collection("users").doc(auth.currentUser.uid).set(user.toJson());
-    });
+    await auth.currentUser.reload();
+    if (!isVerified()) throw NotVerifiedException();
+    UserCT user;
+    user = new UserCT(
+        isOrganizer, firstName, auth.currentUser.email, false, false);
+    await firestore
+        .collection("users")
+        .doc(auth.currentUser.uid)
+        .set(user.toJson());
     return user;
   }
 

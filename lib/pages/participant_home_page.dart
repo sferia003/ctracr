@@ -23,7 +23,6 @@ class ParticipantHome extends StatefulWidget {
 class _ParticipantHomeState extends State<ParticipantHome> {
   final TextEditingController _cC = TextEditingController();
   var streams = new List<StreamSubscription<DocumentSnapshot>>();
-  UserCT currentUser;
   String name;
   String email;
   String uuid;
@@ -52,47 +51,57 @@ class _ParticipantHomeState extends State<ParticipantHome> {
                 child: Text('Submit'),
                 onPressed: () {
                   if (widget.user.isPositive) {
-                    _displayError("You may not join a group while you are positive");
-                    
+                    _display("Error",
+                        "You may not join a group while you are positive");
                   } else {
-                  widget.firebaseService.firestore
-                      .collection("event_ids")
-                      .doc(_cC.text)
-                      .get()
-                      .then((value) async {
-                    if (value.exists) {
-                      var userEvents = UserCT.fromSnapshot(await widget
-                              .firebaseService.firestore
+                    widget.firebaseService.firestore
+                        .collection("event_ids")
+                        .doc(_cC.text)
+                        .get()
+                        .then((value) async {
+                      if (value.exists) {
+                        var userEvents = UserCT.fromSnapshot(await widget
+                                .firebaseService.firestore
+                                .collection("users")
+                                .doc(
+                                    widget.firebaseService.auth.currentUser.uid)
+                                .get())
+                            .events;
+                        if (userEvents.contains(value.data()["id"])) {
+                          _display("Error",
+                              "You may not join a group you are already in");
+                        } else {
+                          userEvents.add(value.data()["id"]);
+                          widget.firebaseService.firestore
                               .collection("users")
                               .doc(widget.firebaseService.auth.currentUser.uid)
-                              .get())
-                          .events;
-                      if (userEvents.contains(value.data()["id"])) {
-                        _displayError("You may not join a group you are already in");
-                      } else {
-                      userEvents.add(value.data()["id"]);
-                      widget.firebaseService.firestore
-                          .collection("users")
-                          .doc(widget.firebaseService.auth.currentUser.uid)
-                          .update({"events": userEvents});
-                        List<EventParticipant> currentParticipants = Event.fromSnapshot(await widget
-                              .firebaseService.firestore
+                              .update({"events": userEvents});
+                          List<EventParticipant> currentParticipants =
+                              Event.fromSnapshot(await widget
+                                      .firebaseService.firestore
+                                      .collection("events")
+                                      .doc(value.data()["id"])
+                                      .get())
+                                  .participants;
+                          currentParticipants.add(new EventParticipant(
+                              name, false, false, email, uuid));
+                          widget.firebaseService.firestore
                               .collection("events")
                               .doc(value.data()["id"])
-                              .get()).participants;
-                        currentParticipants.add(new EventParticipant(name, false, false, email, uuid));
-                        widget.firebaseService.firestore
-                          .collection("events")
-                          .doc(value.data()["id"])
-                          .update({"participants": {widget.firebaseService.auth.currentUser.uid: currentParticipants.map((e) => e.toJson())}});
-                      Navigator.of(context).pop();
+                              .update({
+                            "participants": currentParticipants
+                                .map((e) => e.toJson())
+                                .toList()
+                          });
+                          Navigator.of(context).pop();
+                        }
+                      } else {
+                        Navigator.of(context).pop();
+                        _display("Error", "Invalid code, please try again");
                       }
-                    } else {
-                      Navigator.of(context).pop();
-                       _displayError("Invalid code, please try again");
-                    }
-                  });
-                }}),
+                    });
+                  }
+                }),
             TextButton(
               child: Text('Cancel'),
               onPressed: () {
@@ -103,25 +112,36 @@ class _ParticipantHomeState extends State<ParticipantHome> {
         );
       },
     );
-      
   }
 
-  Future<void> _checkOut(eventUUID) {
-    widget.firebaseService.firestore.collection("events").doc(eventUUID).set({"participants": {uuid: {"checkOutTime": DateTime.now()}}});
+  Future<void> _checkOut(eventUUID) async {
+    List<EventParticipant> participants = Event.fromSnapshot(await widget
+            .firebaseService.firestore
+            .collection("events")
+            .doc(eventUUID)
+            .get())
+        .participants;
+    participants
+        .firstWhere((element) => (element.uuid == uuid))
+        .checkOut(DateTime.now());
+    widget.firebaseService.firestore
+        .collection("events")
+        .doc(eventUUID)
+        .update({"participants": participants.map((e) => e.toJson()).toList()});
     setState(() {});
   }
 
-Future<void> _displayError(_errorMessage) async {
+  Future<void> _display(_title, _message) async {
     return showDialog<void>(
       context: context,
       barrierDismissible: false, // user must tap button!
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Error'),
+          title: Text(_title),
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
-                Text(_errorMessage),
+                Text(_message),
               ],
             ),
           ),
@@ -138,8 +158,20 @@ Future<void> _displayError(_errorMessage) async {
     );
   }
 
-  Future<void> _checkIn(eventUUID) {
-    widget.firebaseService.firestore.collection("events").doc(eventUUID).set({"checkInTime": DateTime.now()});
+  Future<void> _checkIn(eventUUID) async {
+    List<EventParticipant> participants = Event.fromSnapshot(await widget
+            .firebaseService.firestore
+            .collection("events")
+            .doc(eventUUID)
+            .get())
+        .participants;
+    participants
+        .firstWhere((element) => (element.uuid == uuid))
+        .checkIn(DateTime.now());
+    widget.firebaseService.firestore
+        .collection("events")
+        .doc(eventUUID)
+        .update({"participants": participants.map((e) => e.toJson()).toList()});
     setState(() {});
   }
 
@@ -155,12 +187,20 @@ Future<void> _displayError(_errorMessage) async {
   }
 
   Widget _checkEventStatus(Event event) {
-    if (event.participants.firstWhere((element) => element.uuid == uuid)?.checkInTime ?? true && !(DateTime.now().isAfter(event.end))) {
+    if (event.participants
+                .firstWhere((element) => element.uuid == uuid)
+                ?.checkInTime ==
+            null &&
+        !(DateTime.now().isAfter(event.end))) {
       return TextButton(
         child: const Text('Check-In'),
         onPressed: _isDisabled(event),
       );
-  } else if (event.participants.firstWhere((element) => element.uuid == uuid)?.checkOutTime ?? true && !(DateTime.now().isAfter(event.end))) {
+    } else if (event.participants
+                .firstWhere((element) => element.uuid == uuid)
+                ?.checkOutTime ==
+            null &&
+        !(DateTime.now().isAfter(event.end))) {
       return TextButton(
           child: const Text('Check-Out'),
           onPressed: () => _checkOut(event.eventId));
@@ -171,6 +211,7 @@ Future<void> _displayError(_errorMessage) async {
 
   @override
   void dispose() {
+    super.dispose();
     streams.forEach((element) {
       element.cancel();
     });
@@ -189,6 +230,7 @@ Future<void> _displayError(_errorMessage) async {
       uuid = widget.firebaseService.auth.currentUser.uid;
       var sEvents = widget.user.events;
       events = new List<Event>();
+      setState(() {});
       sEvents.forEach((event) async {
         Event current;
         await widget.firebaseService.firestore
@@ -210,8 +252,8 @@ Future<void> _displayError(_errorMessage) async {
         });
       });
     }));
-    setState(() {
-    });
+
+    setState(() {});
   }
 
   void addEvent(Event event) {
@@ -225,14 +267,25 @@ Future<void> _displayError(_errorMessage) async {
 
   @override
   void initState() {
+    super.initState();
     name = widget.user.name;
     email = widget.user.email;
     uuid = widget.firebaseService.auth.currentUser.uid;
     addDataListener();
-    super.initState();
     timer = Timer.periodic(Duration(seconds: 1), (Timer t) {
-      setState(() {
-      });
+      setState(() {});
+    });
+    Future.delayed(Duration.zero, () {
+      if (widget.user.isNotified) {
+        _display(
+            "Important Message",
+            "A user in a group you have attended has recently tested positive for COVID-19. " +
+                "You are advised to get tested immediately and follow the guidelines on the CDC website(cdc.gov).");
+        widget.firebaseService.firestore
+            .collection("users")
+            .doc(uuid)
+            .update({"isNotified": false});
+      }
     });
   }
 
@@ -319,6 +372,8 @@ Future<void> _displayError(_errorMessage) async {
       ],
     );
   }
+
+  void reportPositive() {}
 
   @override
   Widget build(BuildContext context) {

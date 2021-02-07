@@ -42,7 +42,7 @@ class Event {
         this.streetAddress = snapshot.data()["streetAddress"],
         this.cityStateZipAddress = snapshot.data()["cityStateZipAddress"],
         this.description = snapshot.data()["description"],
-        this.participants = snapshot.data()["participants"];
+        this.participants = snapshot.data()["participants"].map<EventParticipant>((e) => EventParticipant.fromJson(e)).toList();
 
   toJson() => {
         "eventId": this.eventId,
@@ -85,14 +85,14 @@ class EventParticipant {
     this.contacted = true;
   }
 
-  EventParticipant.fromSnapshot(DocumentSnapshot snapshot)
-      : this.name = snapshot.data()["name"],
-        this.positive = snapshot.data()["positive"],
-        this.email = snapshot.data()["email"],
-        this.checkInTime = snapshot.data()["checkInTime"],
-        this.contacted = snapshot.data()["contacted"],
-        this.uuid = snapshot.data()["uuid"],
-        this.checkOutTime = snapshot.data()["checkOutTime"];
+  EventParticipant.fromJson(Map<String, dynamic> json)
+      : this.name = json["name"],
+        this.positive = json["positive"],
+        this.email = json["email"],
+        this.checkInTime = json["checkInTime"]?.toDate(),
+        this.contacted = json["contacted"],
+        this.uuid = json["uuid"],
+        this.checkOutTime = json["checkOutTime"]?.toDate();
 
 
   toJson() => {
