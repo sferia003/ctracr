@@ -1,7 +1,6 @@
 import 'package:ctracer/models/event.dart';
 import 'package:ctracer/services/firebase_service.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../services/size_config.dart';
 import 'package:date_time_picker/date_time_picker.dart';
 import '../models/user.dart';
@@ -77,7 +76,6 @@ class _OrganizerNewEventState extends State<OrganizerNewEvent> {
         lastDate: DateTime(2100),
         controller: _lD,
         dateLabelText: 'End Time',
-
       ),
     );
   }
@@ -202,80 +200,37 @@ class _OrganizerNewEventState extends State<OrganizerNewEvent> {
         ));
   }
 
-  ExpansionTile _eventTile(Event event) {
-    return ExpansionTile(
-      title: Row(children: <Widget>[
-        SizedBox(width: SizeConfig.bH * 3),
-        Text(event.name,
-            style: TextStyle(
-                fontSize: SizeConfig.bH * 6, fontWeight: FontWeight.bold)),
-        Spacer()
-      ]),
-      childrenPadding:
-          EdgeInsets.only(left: SizeConfig.bH * 7, right: SizeConfig.bH * 3),
-      children: [
-        Row(
-          children: [
-            Icon(Icons.people),
-            SizedBox(width: SizeConfig.bH * 3),
-            Text(event.organization),
-          ],
-        ),
-        SizedBox(height: SizeConfig.bV * 1),
-        Row(
-          children: [
-            Icon(Icons.lock_open),
-            SizedBox(width: SizeConfig.bH * 3),
-            Text(event.code),
-          ],
-        ),
-        SizedBox(height: SizeConfig.bV * 1),
-        Row(
-          children: [
-            Icon(Icons.calendar_today),
-            SizedBox(width: SizeConfig.bH * 3),
-            Text(DateFormat.yMMMMd('en_US').format(event.start)),
-          ],
-        ),
-        SizedBox(height: SizeConfig.bV * 1),
-        Row(
-          children: [
-            Icon(Icons.schedule),
-            SizedBox(width: SizeConfig.bH * 3),
-            Text(
-                '${DateFormat.jm().format(event.start)} - ${DateFormat.jm().format(event.end)}'),
-          ],
-        ),
-        SizedBox(height: SizeConfig.bV * 1),
-        Row(
-          children: [
-            Icon(Icons.location_on),
-            SizedBox(width: SizeConfig.bH * 3),
-            Text('${event.streetAddress}\n${event.cityStateZipAddress}'),
-          ],
-        ),
-        SizedBox(
-          height: SizeConfig.bV * 3,
-        ),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Text(event.description),
-        ),
-      ],
-    );
-  }
-
   void _createEvent() async {
-      newEvent = Event(widget.firebaseService.auth.currentUser.uid, DateTime.parse(_fD.text), DateTime.parse(_lD.text), _nC.text, _orC.text,
-          _orCC.text, _sC.text, _dC.text, _oC.text);
+    newEvent = Event(
+        widget.firebaseService.auth.currentUser.uid,
+        DateTime.parse(_fD.text),
+        DateTime.parse(_lD.text),
+        _nC.text,
+        _orC.text,
+        _orCC.text,
+        _sC.text,
+        _dC.text,
+        _oC.text);
 
-      await widget.firebaseService.firestore.collection("events").doc(newEvent.eventId).set(newEvent.toJson());
-      await widget.firebaseService.firestore.collection("event_ids").doc(newEvent.code).set({"id": newEvent.eventId});
-      var userEvents = UserCT.fromSnapshot(await widget.firebaseService.firestore.collection("users").doc(widget.firebaseService.auth.currentUser.uid).get()).events;
-      userEvents.add(newEvent.eventId);
-      await widget.firebaseService.firestore.collection("users").doc(widget.firebaseService.auth.currentUser.uid).update({"events": userEvents});
-      Navigator.of(context).pop();
-
+    await widget.firebaseService.firestore
+        .collection("events")
+        .doc(newEvent.eventId)
+        .set(newEvent.toJson());
+    await widget.firebaseService.firestore
+        .collection("event_ids")
+        .doc(newEvent.code)
+        .set({"id": newEvent.eventId});
+    var userEvents = UserCT.fromSnapshot(await widget.firebaseService.firestore
+            .collection("users")
+            .doc(widget.firebaseService.auth.currentUser.uid)
+            .get())
+        .events;
+    userEvents.add(newEvent.eventId);
+    await widget.firebaseService.firestore
+        .collection("users")
+        .doc(widget.firebaseService.auth.currentUser.uid)
+        .update({"events": userEvents});
+    Navigator.of(context).pop();
   }
 
   @override

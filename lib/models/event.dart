@@ -104,4 +104,8 @@ class EventParticipant {
         "contacted": this.contacted,
         "checkOutTime": this.checkOutTime
       };
+
+  @override
+  bool operator ==(o) => o is EventParticipant && this.uuid == o.uuid;
+  int get hashCode => this.uuid.hashCode;
 }

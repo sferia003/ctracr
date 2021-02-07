@@ -14,9 +14,9 @@ class SizeConfig {
   static double sV;
 
   static double aspectRatio(double ratio) {
-    return (bH/bV) * ratio;
+    return (bH / bV) * ratio;
   }
-  
+
   void init(BuildContext context) {
     _mediaQueryData = MediaQuery.of(context);
     screenWidth = _mediaQueryData.size.width;

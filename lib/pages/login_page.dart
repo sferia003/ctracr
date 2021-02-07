@@ -1,14 +1,14 @@
-import 'package:ctracer/pages/organizer_home_page.dart';
-import 'package:ctracer/pages/participant_home_page.dart';
 import 'package:flutter/material.dart';
 
 import 'package:connectivity_wrapper/connectivity_wrapper.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../services/firebase_service.dart';
 import '../services/size_config.dart';
 import '../models/user.dart';
 import './signup_page.dart';
-import '../services/firebase_service.dart';
+import 'organizer_home_page.dart';
+import 'participant_home_page.dart';
 
 class LoginPage extends StatefulWidget {
   final FirebaseService firebaseService;
@@ -128,9 +128,10 @@ class _LoginPageState extends State<LoginPage> {
 
   Route _transitionLogged() {
     return PageRouteBuilder(
-      pageBuilder: (context, animation, secondaryAnimation) => (user.isOrganizer) ? 
-          OrganizerHome(user, firebaseService: widget.firebaseService):
-          ParticipantHome(user, firebaseService: widget.firebaseService),
+      pageBuilder: (context, animation, secondaryAnimation) =>
+          (user.isOrganizer)
+              ? OrganizerHome(user, firebaseService: widget.firebaseService)
+              : ParticipantHome(user, firebaseService: widget.firebaseService),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         var begin = Offset(0.0, 1.0);
         var end = Offset.zero;
@@ -328,7 +329,6 @@ class _LoginPageState extends State<LoginPage> {
           ]),
       child: Column(
         children: <Widget>[_buildEmail(), _buildPassword()],
-        
       ),
     );
   }
@@ -347,13 +347,12 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _submit() async {
-    String _errorMessage = "";  
+    String _errorMessage = "";
     try {
       user = await widget.firebaseService.signIn(_eC.text, _pC.text);
       Navigator.of(context).push(_transitionLogged());
-        _eC.clear();
-        _pC.clear();
-      
+      _eC.clear();
+      _pC.clear();
     } on FirebaseAuthException catch (e) {
       switch (e.code) {
         case "invalid-email":

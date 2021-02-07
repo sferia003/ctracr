@@ -132,7 +132,7 @@ class _SignUpPageState extends State<SignUpPage> {
   Route _transitionSignUp() {
     return PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) =>
-          SignUpIntro(user , firebaseService: widget.firebaseService),
+          SignUpIntro(user, firebaseService: widget.firebaseService),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         var begin = Offset(-1.0, 0.0);
         var end = Offset.zero;

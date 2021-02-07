@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../services/size_config.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:connectivity_wrapper/connectivity_wrapper.dart';
 import '../services/firebase_service.dart';
 import 'organizer_home_page.dart';
@@ -130,7 +129,7 @@ class _SignUpIntroState extends State<SignUpIntro> {
   Future<void> _displayError(_errorMessage) async {
     return showDialog<void>(
       context: context,
-      barrierDismissible: false, // user must tap button!
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('Error'),
@@ -158,22 +157,24 @@ class _SignUpIntroState extends State<SignUpIntro> {
     bool isAdministrator = _isAdministrator;
 
     await widget.firebaseService.auth.currentUser.reload().then((value) async {
-      widget.user = await widget.firebaseService.signUpVerification(_isAdministrator, _nC.text).catchError((e) {
+      widget.user = await widget.firebaseService
+          .signUpVerification(_isAdministrator, _nC.text)
+          .catchError((e) {
         _displayError(
-                "Please verify the email you signed up with before proceeding.");
+            "Please verify the email you signed up with before proceeding.");
         return;
       });
     });
 
-      Navigator.of(context).push(_transitionHome(isAdministrator));
-
+    Navigator.of(context).push(_transitionHome(isAdministrator));
   }
 
   Route _transitionHome(bool isAdministrator) {
     return PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) => isAdministrator
           ? OrganizerHome(widget.user, firebaseService: widget.firebaseService)
-          : ParticipantHome(widget.user, 
+          : ParticipantHome(
+              widget.user,
               firebaseService: widget.firebaseService,
             ),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -318,36 +319,12 @@ class _SignUpIntroState extends State<SignUpIntro> {
               child: Row(
                 children: <Widget>[
                   Spacer(),
-                  // Expanded(
-                  //   flex: 1,
-                  //   child: IconButton(
-                  //     icon: Icon(Icons.chevron_left),
-                  //     onPressed: () {
-                  //       _pageController.previousPage(
-                  //           duration: Duration(seconds: 1), curve: Curves.ease);
-                  //     },
-                  //     color: Colors.white,
-                  //     iconSize: 6 * SizeConfig.bH,
-                  //   ),
-                  // ),
                   Text(
                     "Get Started",
                     style: TextStyle(
                         color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                   Spacer(),
-                  // Expanded(
-                  //   flex: 1,
-                  //   child: IconButton(
-                  //     icon: Icon(Icons.chevron_right),
-                  //     onPressed: () {
-                  //       _pageController.nextPage(
-                  //           duration: Duration(seconds: 1), curve: Curves.ease);
-                  //     },
-                  //     color: Colors.white,
-                  //     iconSize: 6 * SizeConfig.bH,
-                  //   ),
-                  // ),
                 ],
               ),
             ),

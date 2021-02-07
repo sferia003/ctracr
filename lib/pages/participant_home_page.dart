@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:connectivity_wrapper/connectivity_wrapper.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 import 'dart:async';
 import '../models/event.dart';
@@ -22,6 +21,7 @@ class ParticipantHome extends StatefulWidget {
 
 class _ParticipantHomeState extends State<ParticipantHome> {
   final TextEditingController _cC = TextEditingController();
+  var userStream;
   var streams = new List<StreamSubscription<DocumentSnapshot>>();
   String name;
   String email;
@@ -188,16 +188,27 @@ class _ParticipantHomeState extends State<ParticipantHome> {
 
   Widget _checkEventStatus(Event event) {
     if (event.participants
-                .firstWhere((element) => element.uuid == uuid)
+                .firstWhere((element) => element.uuid == uuid,
+                    orElse: () => null)
                 ?.checkInTime ==
             null &&
         !(DateTime.now().isAfter(event.end))) {
-      return TextButton(
-        child: const Text('Check-In'),
-        onPressed: _isDisabled(event),
+      return Row(
+        children: [
+          TextButton(
+            child: const Text("Leave Event"),
+            onPressed: () => leaveEvent(event),
+          ),
+          Spacer(),
+          TextButton(
+            child: const Text('Check-In'),
+            onPressed: _isDisabled(event),
+          ),
+        ],
       );
     } else if (event.participants
-                .firstWhere((element) => element.uuid == uuid)
+                .firstWhere((element) => element.uuid == uuid,
+                    orElse: () => null)
                 ?.checkOutTime ==
             null &&
         !(DateTime.now().isAfter(event.end))) {
@@ -207,6 +218,43 @@ class _ParticipantHomeState extends State<ParticipantHome> {
     } else {
       return Text("You May No Longer Attend This Event");
     }
+  }
+
+  leaveEvent(Event event) async {
+    var userEvents = UserCT.fromSnapshot(await widget.firebaseService.firestore
+            .collection("users")
+            .doc(widget.firebaseService.auth.currentUser.uid)
+            .get())
+        .events;
+    userEvents.remove(event.eventId);
+    widget.firebaseService.firestore
+        .collection("users")
+        .doc(uuid)
+        .update({"events": userEvents});
+    List<EventParticipant> currentParticipants = Event.fromSnapshot(await widget
+            .firebaseService.firestore
+            .collection("events")
+            .doc(event.eventId)
+            .get())
+        .participants;
+    currentParticipants
+        .remove(new EventParticipant(name, false, false, email, uuid));
+    widget.firebaseService.firestore
+        .collection("events")
+        .doc(event.eventId)
+        .update({
+      "participants": currentParticipants.map((e) => e.toJson()).toList()
+    });
+
+    streams.forEach((element) {
+      element.onData((data) {
+        if (Event.fromSnapshot(data).eventId == event.eventId) element.cancel();
+      });
+    });
+
+    setState(() {
+      events.remove(event);
+    });
   }
 
   @override
@@ -219,7 +267,7 @@ class _ParticipantHomeState extends State<ParticipantHome> {
   }
 
   void addDataListener() async {
-    streams.add(widget.firebaseService.firestore
+    userStream = widget.firebaseService.firestore
         .collection("users")
         .doc(uuid)
         .snapshots()
@@ -251,7 +299,7 @@ class _ParticipantHomeState extends State<ParticipantHome> {
           }));
         });
       });
-    }));
+    });
 
     setState(() {});
   }
@@ -272,7 +320,7 @@ class _ParticipantHomeState extends State<ParticipantHome> {
     email = widget.user.email;
     uuid = widget.firebaseService.auth.currentUser.uid;
     addDataListener();
-    timer = Timer.periodic(Duration(seconds: 1), (Timer t) {
+    timer = Timer.periodic(Duration(minutes: 1), (Timer t) {
       setState(() {});
     });
     Future.delayed(Duration.zero, () {
@@ -373,7 +421,55 @@ class _ParticipantHomeState extends State<ParticipantHome> {
     );
   }
 
-  void reportPositive() {}
+  void reportPositive() {
+    events.forEach((element) {
+      EventParticipant positiveParticipant =
+          element.participants.firstWhere((element) => element.uuid == uuid);
+      widget.firebaseService.firestore
+          .collection("events")
+          .doc(element.eventId)
+          .get()
+          .then((value) {
+        Event e = Event.fromSnapshot(value);
+        var participants = e.participants;
+        participants.forEach((element) {
+          if (element.uuid == uuid) {
+            element.positive = true;
+          }
+        });
+        widget.firebaseService.firestore
+            .collection("events")
+            .doc(element.eventId)
+            .update(
+                {"participants": participants.map((e) => e.toJson()).toList()});
+        e.participants.forEach((element) {
+          if (element.uuid != uuid && !element.contacted) {
+            widget.firebaseService.firestore
+                .collection("users")
+                .doc(element.uuid)
+                .get()
+                .then((usr) {
+              if (element.checkInTime
+                      .isBefore(positiveParticipant.checkOutTime) &&
+                  positiveParticipant.checkInTime
+                      .isBefore(element.checkInTime)) {
+                widget.firebaseService.firestore
+                    .collection("users")
+                    .doc(element.uuid)
+                    .update({"isNotified": true});
+              }
+            });
+          }
+        });
+      });
+    });
+
+    _display(
+        "Important Message",
+        "You have notified the group event leaders with your positive test. " +
+            "It is advised that you do not attend any other events until you have succesfully quaratined. "
+                "Please check the guidelines on the CDC website(cdc.gov) for more information.");
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -387,9 +483,6 @@ class _ParticipantHomeState extends State<ParticipantHome> {
             }),
       ),
       drawer: Drawer(
-        // Add a ListView to the drawer. This ensures the user can scroll
-        // through the options in the drawer if there isn't enough vertical
-        // space to fit everything.
         child: ListView(
           children: <Widget>[
             Container(
@@ -414,6 +507,7 @@ class _ParticipantHomeState extends State<ParticipantHome> {
               leading: Icon(Icons.warning, color: Colors.orange),
               title: Text('Report Positive COVID-19 Test'),
               onTap: () {
+                reportPositive();
                 Navigator.pop(context);
               },
             ),
